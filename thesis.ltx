@@ -35,9 +35,9 @@
 }
 
 \graphicspath{ {./textures/} }
-\newcommand{\graphimg}[1]{
+\newcommand{\graphimg}[2]{
   \begin{center}
-  \includesvg[scale=0.8]{#1.svg}
+  \includesvg[scale=#1]{#2.svg}
   \end{center}
 }
 
@@ -60,21 +60,21 @@ In diesem Bericht werde ich zwei Algorithmen vorstellen, die ich gelernt und sel
 \section{Lösung mit naiven Ansätzen}
 \subsection{Was wäre der naheliegendste Ansatz an das Problem?}
 
-Meine erste Idee wäre, einfach einen beliebigen Weg zu finden von der Quelle zur Senke, beispielsweise mit dem bekannten Dijkstra Algorithmus. Jetzt würde ich schauen, wie viel Wasser ich entlang dieses Weges schicken kann. Das würde dem minimum der Kantengewichte entlang des Weges entsprechen. Jetzt würde ich alle Kantengewichte entlang des Weges aktualisieren, indem ich so viel abziehe wie ich Wasser entlanggeschickt habe. Alle Kanten die dabei 0 erreichen würde ich entfernen.
+Meine erste Idee wäre, einfach einen beliebigen Pfad zu finden von der Quelle zur Senke, beispielsweise mit dem bekannten Dijkstra Algorithmus. Jetzt würde ich schauen, wie viel Wasser ich entlang dieses Pfades schicken kann. Das würde dem minimum der Kantengewichte entlang des Pfades entsprechen. Jetzt würde ich alle Kantengewichte entlang des Pfades aktualisieren, indem ich so viel abziehe wie ich Wasser entlanggeschickt habe. Alle Kanten die dabei 0 erreichen würde ich entfernen.
 
 \begin{algorithm}
 \caption{Naiver algorithmus mit Dijkstra}
 $g \gets Flussnetzwerk$\;
 $result \gets 0$\;
-\While{$weg \gets dijkstra(g)$}{
+\While{$pfad \gets dijkstra(g)$}{
   $wassermenge \gets \infty$\;
-  \ForEach{$kante \in weg$} {
+  \ForEach{$kante \in pfad$} {
     $wassermenge \gets \min(wassermenge, kante.kapazitaet)$
   }
 
   $result \gets result + wassermenge$\;
 
-  \ForEach{$kante \in weg$} {
+  \ForEach{$kante \in pfad$} {
     $kante.gewicht \gets kante.gewicht - wassermenge$\;
     \If{$kante.gewicht = 0$} {
       $g.loesche(kante)$\;
@@ -85,18 +85,51 @@ $result \gets 0$\;
 \newpage
 \subsection{Wieso funktioniert das nicht?}
 Nehmen wir folgendes Flussdiagramm als Beispiel:
-\graphimg{naive_graph}
-Zuerst wählen wir einen Zufälligen weg von $s$ nach $t$ aus:
-\graphimg{naive_step1}
-Jetzt nehmen wir von jeder Kante $1$ Gewicht weg, da wir $1$ Wasser entlang des Weges schicken. Somit verfallen die Kanten auf dem roten Weg, da alle nur ein Kantengewicht von $1$ haben.
-\graphimg{naive_step2}
-Jetzt hat es keinen Weg mer von $s$ nach $t$. Somit kämen wir zu der Lösung, das der maximale Fluss auf diesem Netzwerk $1$ ist. Wir haben hier aber einen Beispiel, wo wir $2$ Wasser über das Netzwerk schicken können:
-\graphimg{naive_sol} 
+\graphimg{0.8}{naive_graph}
+Zuerst wählen wir einen Zufälligen Pfad von $s$ nach $t$ aus:
+\graphimg{0.8}{naive_step1}
+Jetzt nehmen wir von jeder Kante $1$ Gewicht Pfad, da wir $1$ Wasser entlang des Pfades schicken. Somit verfallen die Kanten auf dem roten Pfad, da alle nur ein Kantengewicht von $1$ haben.
+\graphimg{0.8}{naive_step2}
+Jetzt hat es keinen Pfad mer von $s$ nach $t$. Somit kämen wir zu der Lösung, das der maximale Fluss auf diesem Netzwerk $1$ ist. Wir haben hier aber einen Beispiel, wo wir $2$ Wasser über das Netzwerk schicken können:
+\graphimg{0.8}{naive_sol} 
 \subsection{Wieso hat das nicht funktioniert?}
-Nur weil wir einen Weg gefunden haben, heisst das noch lange nicht das wir den auch benutzen wollen für die optimale Lösung. Bei folgendem Beispiel ist es ziemlich klar, das es keinen Sinn macht die kannte $(b, c)$ zu benutzen. Wir haben eine riesige kapazität auf $(b, t)$, und nur ganz wenig auf $(c, t)$. Wir möchten alles Wasser wo bei $b$ ankommt sofort durch $(b, t)$ schicken, damit so viel kapazität wie möglich auf $(c, t)$ übrig bleibt für Wasser, das bei $c$ ankommt.
-\graphimg{naive_weights}
-Natürlich könnten wir Glück haben, so dass wir zufälligerweise genau die richtige Wege in der richtigen Reihenfolge auswählen. Aber wenn wir das nicht garantieren können, ist unser Algorithmus nicht korrekt.
-\section{Der Ford-Fulkerson Algorithmus}
+Nur weil wir einen Pfad gefunden haben, heisst das noch lange nicht das wir den auch benutzen wollen für die optimale Lösung. Bei folgendem Beispiel ist es ziemlich klar, das es keinen Sinn macht die kannte $(b, c)$ zu benutzen. Wir haben eine riesige kapazität auf $(b, t)$, und nur ganz wenig auf $(c, t)$. Wir möchten alles Wasser wo bei $b$ ankommt sofort durch $(b, t)$ schicken, damit so viel kapazität wie möglich auf $(c, t)$ übrig bleibt für Wasser, das bei $c$ ankommt.
+\graphimg{0.8}{naive_weights}
+Natürlich könnten wir Glück haben, so dass wir zufälligerweise genau die richtige Pfade in der richtigen Reihenfolge auswählen. Aber wenn wir das nicht garantieren können, ist unser Algorithmus nicht korrekt.
+\section{Die Ford-Fulkerson Methode}
+\subsection{Die Idee}
+Das Prinzip der Ford-Fulkerson Methode ist das gleiche wie das Prinzip vom beschriebenen naiven Algorithmus. Wir suchen einen Pfad von $s$ nach $t$, und lassen so viel Wasser wie es geht durchfliessen.
+
+Der einzige Unterschied ist, das wir beim Ford-Fulkerson für jede Kante eine Kante einfügen, die in die entgegengesetzte Richtung geht, die gleiche Kapazität hat, und immer umgekehrt so viel Wasser darauf fliesst, wie auf der Partnerkante. Anstatt Kanten allmählich zu entfernen, verändern wir unseren Dijkstra so, dass es Kanten auf denen gleich viel Wasser ist wie ihre Kapazität nicht in betracht zieht.
+
+Die jetzt eingefügte Rückkanten bilden einen sogenannten Restnetzwerk.
+
+\graphimg{0.7}{ford_graph}
+
+Die Intuition dahinter ist, das wir bei einer schlechten Pfadwahl, das unser Resultat wie vorher kaputt machen würde, den schlechten Teil zurückfahren können. Anfangs sind die Kantengewichte des Restnetzwerks gleich gross wie dessen Kapazitäten, also können wir sie nicht benutzen. Sobald wir eine Kante aber benutzt haben, können wir dessen Restkante benutzen. 
+
+
+
+\subsection{Beweis}
+\subsubsection{Der Algorithmus findet keine unmögliche Lösungen}
+Das unser naiver Algorithmus keine unmögliche Lösungen gibt, ist trivial zu sehen. Alle Pfade können nacheinander ausgeführt werden, und gehen von der Quelle bis zur Senke.
+
+Haben wir nun eine Kante, dessen Restkante wir benutzen, können wir das immer so umstellen, das wir dies nichtmehr tun. Benutzen wir die Kante $(a, b)$ mit Gewicht $x$, und rückwärts mit Gewicht $y$, wissen wir das $x \geq y$ wegen der Regel das Kanten im Restnetzwerk immer so viel Platz haben wie Platz verbraucht ist auf der Kante im Ausgangsflussnetzwerk. Wir wissen nun, das man vom Knoten $b$ mindestens $x$ Wasser zu $t$ befördern können, und vom Knoten $a$ mindestens $y$ Wasser zu $t$ befördern können. Grund dafür ist, das wir Pfade, die in $t$ enden, gefunden haben die durch $(a, b)$ gehen mit der Gewichtssumme $x$, und Pfade, die durch $(b, a)$ gehen mit der Gewichtssumme $y$.
+
+Jetzt verändern wir die Pfade so, das wir die Restkante nicht benutzen. Wir schicken nur noch $x - y$ Wasser durch $(a, b)$, und kein Wasser durch $(b, a)$. Die Menge an Wasser, die von $a$ abfliessen muss, ändert sich nicht, da jetzt $y$ weniger kommt von $b$, aber auch $y$ weniger weggeschickt wird nach $b$. Genau gleich muss nicht mehr Wasser von $b$ abfliessen, da jetzt zwar $y$ weniger nach $a$ geschickt wird, aber auch $y$ weniger kommt von $a$.
+
+\graphimg{0.7}{ford_intuition}
+
+\subsubsection{Der Algorithmus findet die optimale Lösung}
+Das können wir mit enem Beweis durch Wiederspruch belegen. Wir geben eine Lösung aus, sobald wir keinen Pfad mehr finden können von $s$ nach $t$ im Gesamtnetzwerk (Ausgangsnetzwerk + Restnetzwerk). 
+
+Die Menge aller Punkte, die wir von $s$ erreichen können, nennen wir $C$. 
+
+Wir haben keine Kanten oder Restkanten, die aus $C$ hinausführen, und noch Kapazität haben. Hätten wir so eine Kante, könnten wir den Zielpunkt von $s$ aus erreichen, und somit wäre der Punkt auch in $C$ -> die Kante führt nicht aus $C$ hinaus.
+
+Was bedeutet das genau? Alle Restkanten, die aus $C$ hinausführen, sind voll, somit sind alle Ausgangskanten, die in $C$ hineinführen, leer. Alle Ausgangskanten, die aus $C$ hinausführen, sind voll, und ihre respektive Restkanten deshalb leer. Es fliesst kein Wasser in $C$ hinein, es fliesst nur Wasser raus (Volle Restkanten heissen nicht das Wasser auf den Restkannten fliesst, siehe Ausgangssituation!). Somit ist $C$ eine Menge von Punkten, die einen Schnitt bilden.
+
+$C$ ist ausserdem minimal. Wäre $C$ nicht minimal, wäre es unmöglich den Fluss von $s$ nach $t$ aufzubauen, den wir aufgebaut haben. Schon vorher hätten wir keinen Pfad mehr finden müssen. Das wir keine unmögliche Lösungen finden, ist schon bewiesen.
 
 
 \end{document}

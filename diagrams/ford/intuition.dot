@@ -1,0 +1,36 @@
+digraph D {
+    splines = line;
+    ranksep = 2;
+    nodesep = 1.5
+
+    subgraph {
+      rank = max; t;t1;
+    }
+
+    subgraph {
+      rank = min; s;s1;
+    }
+    
+    subgraph {
+      rank = same; b; c;c1;b1;
+    }
+
+    edge[labeldistance = 3]
+
+
+    s -> b[headlabel="1", tailport = sw, color = "blue"]
+    s -> c[headlabel="1", tailport = se, color = "red"]
+    b -> c[headlabel="1", taillabel="1", dir = both, color = "blue:red"]
+    c -> t[headlabel="1", headport = ne, color = "blue"]
+    b -> t[headlabel="1", headport = nw, color = "red"]
+
+    s1[label=s]
+    b1[label=b]
+    c1[label=c]
+    t1[label=t]
+
+    s1 -> b1[headlabel="1", tailport = sw, color = "blue"]
+    s1 -> c1[headlabel="1", tailport = se, color = "red"]
+    c1 -> t1[headlabel="1", headport = ne, color = "red"]
+    b1 -> t1[headlabel="1", headport = nw, color = "blue"]
+}
