@@ -1,0 +1,11 @@
+digraph G {
+    subgraph {
+        rank = same; b; c;
+    }
+    
+    s -> b[label=100]
+    s -> c[label=100]
+    b -> c[label=1]
+    c -> t[label=1]
+    b -> t[label=1000]
+}

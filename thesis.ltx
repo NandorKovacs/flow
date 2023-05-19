@@ -1,0 +1,102 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc} % this is needed for umlauts
+\usepackage[ngerman, english]{babel} % this is needed for umlauts
+\usepackage[T1]{fontenc}    % this is needed for correct output of umlauts in pdf
+\usepackage{csquotes}
+\usepackage{amsmath,systeme}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{algorithm2e}
+\usepackage{svg}
+
+\definecolor{dark-green}{rgb}{0.0, 0.4, 0.0}
+\newcommand{\code}[1]{{\color{dark-green}\texttt{\textbf{#1}}}}
+\newtheorem{lemma}{Lemma}
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+
+\title{Max-Flow-Min-Cut Algorithmen}
+\author{
+  Projektunterricht \\
+  Verfasser: Nandor Kovacs \\
+  \\
+  https://github.com/NandorKovacs/flow \\
+  \\
+  MNG Rämibühl
+}
+
+\graphicspath{ {./textures/} }
+\newcommand{\graphimg}[1]{
+  \begin{center}
+  \includesvg[scale=0.8]{#1.svg}
+  \end{center}
+}
+
+\begin{document}
+\maketitle
+\pagebreak
+\section{Problemstellung}
+Das Max-Flow-Min-Cut Theorem besagt, das der maximale Fluss auf einem Flussnetzwerk, und der minimale Schnitt des Netzwerks equivalent ist. Ein Flussnetzwerk ist ein Graph mit einer Quelle, und einer Senke. Das kann man sich so vorstellen, das aus der Quelle unendlich viel Wasser fliessen kann, und die Senke unendlich viel Wasser schlucken kann.
+
+Diese Werte sind aus vielen Gründen sehr interessant für einen Graph. Sie finden in der realen Welt viele anwendungen. Hat man Beispielsweise ein Netz aus Röhren und Schläuchen, und man will wissen wie schnell man Wasser durchpumpen kann, ist der maximale Fluss dieses Flussnetzwerks die Lösung. Erweiterungen dieser Algorithmen werden benutzt um die Wasserzufuhr von Gebieten optimal zu konstruieren. Will man neue Wohngebiete oder Industrieanlagen bauen, brauchen die genug Wasser. Wo es optimal ist die bestehende Wasserinfrastruktur auszubauen, kann man mit solchen Algorithmen gut bestimmen. 
+
+Eines der ersten Anwendungen, die zur Forschung dieser Algorithmen führten, war eine taktische Kriegsfrage. Wenn man ein Strassennetzwerk hat, auf den Soldaten losgeschickt werden, will man die möglichst effizient aufhalten. Wo es optimal ist Barrikaden aufzubauen, ist die gleiche Frage, wie wo der minimale Schnitt des Netzwerks ist. Um dieses Ziel zu lösen wurde der Ford-Fulkerson Algorithmus entwickelt, einer der ersten, und heute noch einer der meistbekannten Lösungen für das Max-Flow-Min-Cut Problem.
+
+Ungefähr Zeitgleich versuchte man auch mit computergestützten Rechnungen die Logistik von der Nahrungsverteilung zwischen Städten und Dörfern zu verbessern. Es war überraschend, das der gleiche Algorithmus funktionierte. Dies schuf das Max-Flow-Min-Cut Theorem, das heute bewiesen ist.
+
+Noch wichtiger ist die Version des Problems, wo das Flussnetzwerk auch noch Kantengewichte hat die die jeweiligen Kosten für einen bestimmten Weg darstellen. Diese Version wird für die oben beschriebene Wasserinfrastruktur verwendet, da es in so einem Fall wichtig ist wie viel Geld es kostet bestimmte Stellen auszubauen. So ein Problem kann man beispielsweise mithilfe von lineares Programmieren lösen.
+
+In diesem Bericht werde ich zwei Algorithmen vorstellen, die ich gelernt und selber implementiert habe.
+
+\section{Lösung mit naiven Ansätzen}
+\subsection{Was wäre der naheliegendste Ansatz an das Problem?}
+
+Meine erste Idee wäre, einfach einen beliebigen Weg zu finden von der Quelle zur Senke, beispielsweise mit dem bekannten Dijkstra Algorithmus. Jetzt würde ich schauen, wie viel Wasser ich entlang dieses Weges schicken kann. Das würde dem minimum der Kantengewichte entlang des Weges entsprechen. Jetzt würde ich alle Kantengewichte entlang des Weges aktualisieren, indem ich so viel abziehe wie ich Wasser entlanggeschickt habe. Alle Kanten die dabei 0 erreichen würde ich entfernen.
+
+\begin{algorithm}
+\caption{Naiver algorithmus mit Dijkstra}
+$g \gets Flussnetzwerk$\;
+$result \gets 0$\;
+\While{$weg \gets dijkstra(g)$}{
+  $wassermenge \gets \infty$\;
+  \ForEach{$kante \in weg$} {
+    $wassermenge \gets \min(wassermenge, kante.kapazitaet)$
+  }
+
+  $result \gets result + wassermenge$\;
+
+  \ForEach{$kante \in weg$} {
+    $kante.gewicht \gets kante.gewicht - wassermenge$\;
+    \If{$kante.gewicht = 0$} {
+      $g.loesche(kante)$\;
+    }
+  }
+}
+\end{algorithm}
+\newpage
+\subsection{Wieso funktioniert das nicht?}
+Nehmen wir folgendes Flussdiagramm als Beispiel:
+\graphimg{naive_graph}
+Zuerst wählen wir einen Zufälligen weg von $s$ nach $t$ aus:
+\graphimg{naive_step1}
+Jetzt nehmen wir von jeder Kante $1$ Gewicht weg, da wir $1$ Wasser entlang des Weges schicken. Somit verfallen die Kanten auf dem roten Weg, da alle nur ein Kantengewicht von $1$ haben.
+\graphimg{naive_step2}
+Jetzt hat es keinen Weg mer von $s$ nach $t$. Somit kämen wir zu der Lösung, das der maximale Fluss auf diesem Netzwerk $1$ ist. Wir haben hier aber einen Beispiel, wo wir $2$ Wasser über das Netzwerk schicken können:
+\graphimg{naive_sol} 
+\subsection{Wieso hat das nicht funktioniert?}
+Nur weil wir einen Weg gefunden haben, heisst das noch lange nicht das wir den auch benutzen wollen für die optimale Lösung. Bei folgendem Beispiel ist es ziemlich klar, das es keinen Sinn macht die kannte $(b, c)$ zu benutzen. Wir haben eine riesige kapazität auf $(b, t)$, und nur ganz wenig auf $(c, t)$. Wir möchten alles Wasser wo bei $b$ ankommt sofort durch $(b, t)$ schicken, damit so viel kapazität wie möglich auf $(c, t)$ übrig bleibt für Wasser, das bei $c$ ankommt.
+\graphimg{naive_weights}
+Natürlich könnten wir Glück haben, so dass wir zufälligerweise genau die richtige Wege in der richtigen Reihenfolge auswählen. Aber wenn wir das nicht garantieren können, ist unser Algorithmus nicht korrekt.
+\section{Der Ford-Fulkerson Algorithmus}
+
+
+\end{document}
