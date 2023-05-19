@@ -1,5 +1,3 @@
-push_relabel/push_relabel
-edmond_carp/edmond_carp
 *.log
 *.aux
 *.pdf
