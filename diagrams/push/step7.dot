@@ -1,0 +1,43 @@
+digraph G {
+  splines=curve
+
+  subgraph x {
+    rank = same; a, 0;
+  }
+  subgraph y {
+    rank = same; b;
+  }
+  subgraph  z{
+    rank = same; c;2;
+  }
+  subgraph {
+    rank = same; d; 1;
+  }
+  subgraph {
+    rank = same; e; 3;f;g;
+  }
+
+  a -> b -> c -> d -> e [style=invis]
+
+  a[style=invis, width=0.1]
+  b[style=invis, width=0.1]
+  c[style=invis, width=0.1]
+  d[style=invis, width=0.1]
+  e[style=invis, width=0.1]
+  f[style=invis, widht=0.1]
+  g[style=invis, widht=0.1]
+  
+  edge[labeldistance = 2.2]
+  nodesep = 0.7
+  
+  a -> 0[style = invis]
+  d -> 1[style=invis]
+
+  0 -> 1[xlabel=1, weight=10]
+  1 -> f[style = invis, weight=10]
+  0 -> 2[xlabel=1]
+  1 -> 2[xlabel=0]
+  e -> f -> g -> 3[style=invis]
+  2 -> 3[xlabel=1]
+  1 -> 3[xlabel=1]
+}

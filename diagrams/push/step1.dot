@@ -1,0 +1,44 @@
+digraph G {
+
+  subgraph x {
+    rank = same; a, 0;
+  }
+  subgraph y {
+    rank = same; b;
+  }
+  subgraph  z{
+    rank = same; c;
+  }
+  subgraph {
+    rank = same; d; 1;
+  }
+  subgraph {
+    rank = same; e; 2; 3;f;
+  }
+
+  a -> b -> c -> d -> e [style=invis]
+
+  a[style=invis, width=0.1]
+  b[style=invis, width=0.1]
+  c[style=invis, width=0.1]
+  d[style=invis, width=0.1]
+  e[style=invis, width=0.1]
+  f[style=invis, widht=0.1]
+  
+  edge[labeldistance = 2.2]
+  nodesep = 0.7
+  
+  a -> 0[style = invis]
+  d -> 1[style=invis]
+
+  1[color=green]
+  2[color=green]
+
+  0 -> 1[xlabel=1, weight=10]
+  1 -> f[style = invis, weight=10]
+  0 -> 2[xlabel=1]
+  1 -> 2[color=red]
+  e -> f -> 2[style=invis]
+  2 -> 3
+  1 -> 3
+}

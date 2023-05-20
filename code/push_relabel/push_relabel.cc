@@ -57,11 +57,12 @@ int main() {
       Edge &edge = e[i];
       int xpair = edge.get_pair(x);
 
+      if (height[xpair] >= height[x]) {
+        continue;
+      }
+
       if (edge.outgoing(x)) {
         if (edge.currentflow >= edge.maxflow) {
-          continue;
-        }
-        if (height[xpair] >= height[x]) {
           continue;
         }
 
@@ -82,9 +83,6 @@ int main() {
         flow[xpair] += residual;
       } else {
         if (edge.currentflow == 0) {
-          continue;
-        }
-        if (height[xpair] >= height[x]) {
           continue;
         }
 
